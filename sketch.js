@@ -14,61 +14,117 @@ class Triangle {
     }
 }
 
-let parent = new Triangle(
-    [200, 400],
-    [600, 400],
-    [400, 400-346.410161514],
-    0,
-    0,
-    0
-)
+let uni_speed = 0.03;
+let trih = 173.205080757
+let parent = new Triangle([0, 200], [200, 200], [100, 200-trih], 0, uni_speed, 0, 0)
 
-let child = new Triangle(
-    parent.A,  // these arent supposed to be referenced but they leave cool artifacts
-    parent.B,
-    parent.C,
-    parent,
-    0.05,
-    0,
-    0
-)
+let keep1 = [];
+let keep2 = [];
+let extra1;
+let extra2;
+let keep1bools = [];
+let keep2bools = [];
+function generateTriangles() {
+    for(let i = 0; i < 3; i++) {
+        keep1.push(new Triangle(parent.A.slice(), parent.B.slice(), parent.C.slice(), parent, uni_speed, 0, 0));
+    }
+    for(let i = 0; i < 3; i++) {
+        keep2.push(new Triangle(parent.A.slice(), parent.B.slice(), parent.C.slice(), parent, uni_speed, 0, 0));
+    }
+    extra1 = new Triangle(parent.A.slice(), parent.B.slice(), parent.C.slice(), parent, uni_speed, 0, 0);
+    extra2 = new Triangle(parent.A.slice(), parent.B.slice(), parent.C.slice(), parent, uni_speed, 0, 0);
+    
+}
+
+let a = false, b = false, c = false;
+function resetBools() {
+    a = false;
+    b = false;
+    c = false;
+}
 
 function setup() {
     can = createCanvas(canh, canw)
-    frameRate(20)
+    frameRate(3)
+    generateTriangles()
 }
 
-function draw() {
-    // drawTriangle(parent)
-    moveTriangle(child)
-    drawTriangle(child)
+let bools = [a, b, c]
+let extra1b = false;
+let extra2b = false;
+let iterations = 25; // do this per triangle
 
-    fill("red")
-    // ellipse(child.C[0], child.C[1], 10, 10)
-    fill("white")
-    if(frameCount > 20) noLoop()
+function draw() {
+    // fill(255-frameCount*10)
+    const dist = trih;
+    const triw = 200;
+    for(let i = 0; i < 3; i++) {
+        if(i == 0) { a = true; }
+        if(i == 1) { b = true; }
+        if(i == 2) { c = true; }
+        moveTriangle(keep1[i])
+        translate(0,i*dist)
+        drawTriangle(keep1[i])
+        translate(0,-i*dist)
+        resetBools()
+    }
+    for(let i = 0; i < 3; i++) {
+        if(i == 0) { a = true; b = true; }
+        if(i == 1) { b = true; c = true; }
+        if(i == 2) { c = true; a = true; }
+        moveTriangle(keep2[i])
+        translate(2*triw, i*dist)
+        drawTriangle(keep2[i])
+        translate(2*-triw, -i*dist)
+        resetBools()
+    }
+    // top mid
+    c = true;
+    extra1b = true;
+    translate(triw, 0)
+    moveTriangle(extra1)
+    drawTriangle(extra1)
+    translate(-triw, 0)
+    extra1b = false;
+    resetBools()
+    // bot mid
+    c = true;
+    extra2b = true;
+    translate(triw, 2*trih)
+    moveTriangle(extra2)
+    drawTriangle(extra2)
+    translate(-triw, -2*trih)
+    extra2b = false;
+    // mid mid
+    a = true; b = true; c = true;
+    translate(triw, trih)
+    moveTriangle(parent)
+    drawTriangle(parent)
+    translate(-triw, -trih)
+    // translate(-triw, -trih)
+    resetBools()
+    if(frameCount > iterations) noLoop()
 }
 
 function moveTriangle(tri) {
-        let Ax = tri.parent.A[0], Ay = tri.parent.A[1]
-        let Bx = tri.parent.B[0], By = tri.parent.B[1]
-        let Cx = tri.parent.C[0], Cy = tri.parent.C[1]
-        tri.A[0] = lerp(Ax, Bx, tri.lerpDist)
-        tri.A[1] = lerp(Ay, By, tri.lerpDist)
-        tri.B[0] = lerp(Bx, Cx, tri.lerpDist)
-        tri.B[1] = lerp(By, Cy, tri.lerpDist)
-        tri.C[0] = lerp(Cx, Ax, tri.lerpDist)
-        tri.C[1] = lerp(Cy, Ay, tri.lerpDist)
-        // tri.A[0] = lerp(tri.parent.A[0], tri.parent.B[0], tri.lerpDist)
-        // tri.A[1] = lerp(tri.parent.A[1], tri.parent.B[1], tri.lerpDist)
-        // tri.B[0] = lerp(tri.parent.B[0], tri.parent.C[0], tri.lerpDist)
-        // tri.B[1] = lerp(tri.parent.B[1], tri.parent.C[1], tri.lerpDist)
-        // tri.C[0] = lerp(tri.parent.C[0], tri.parent.A[0], tri.lerpDist)
-        // tri.C[1] = lerp(tri.parent.C[1], tri.parent.A[1], tri.lerpDist)
+        let Ax = tri.A[0], Ay = tri.A[1]
+        let Bx = tri.B[0], By = tri.B[1]
+        let Cx = tri.C[0], Cy = tri.C[1]
+        if(a){
+            tri.A[0] = lerp(Ax, Bx, tri.lerpDist)
+            tri.A[1] = lerp(Ay, By, tri.lerpDist)
+        }
+        if(b){
+            tri.B[0] = lerp(Bx, Cx, tri.lerpDist)
+            if (!extra2b) tri.B[1] = lerp(By, Cy, tri.lerpDist)
+        }
+        if(c){
+            if (!extra1b) tri.C[0] = lerp(Cx, Ax, tri.lerpDist)
+            if (!extra2b) tri.C[1] = lerp(Cy, Ay, tri.lerpDist)
+        }
         tri.lerpDist += tri.speed
         tri.lerpDist = tri.lerpDist % 1;
 }
-
 
 function drawTriangle(tri) {
     beginShape()
